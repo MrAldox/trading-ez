@@ -268,71 +268,97 @@ export async function loadOpportunities(forceRefresh = false) {
 }
 
 export async function openTicketModal(ticket) {
+  if (!ticket) return;
   const modal = document.getElementById("ticket-modal");
   if (!modal) return;
 
   store.setState({ selectedOpportunity: ticket });
 
+  const setTxt = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  };
+
+  const setValue = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  };
+
+  const probVal = Math.round((ticket.calibrated_prob ?? ticket.calibrated_probability ?? 0.65) * 100);
+  const assetName = ticket.name || ticket.asset_name || ticket.symbol;
+  const pos = ticket.position_size || {};
+  const dollarAlloc = pos.capital_allocated ?? pos.dollar_allocation ?? 0;
+  const dollarRisk = pos.risk_dollars ?? pos.dollar_risk ?? 0;
+  const distSl = ticket.risk_distance_pct || ticket.distance_sl_pct || 0;
+  const invalidationTxt = ticket.invalidation_criteria || ticket.invalidation_condition || `Cierre de vela por debajo de Stop Loss (${store.formatPrice(ticket.stop_loss)}) antes de alcanzar TP1.`;
+
   // Título e identificadores
-  document.getElementById("modal-ticket-title").textContent = `${ticket.symbol} · ${ticket.asset_name || ""}`;
-  document.getElementById("modal-ticket-badge").textContent = `${ticket.direction} (${Math.round(ticket.calibrated_probability * 100)}% Prob. Calibrada)`;
+  setTxt("modal-ticket-title", `${ticket.symbol} · ${assetName}`);
+  setTxt("modal-ticket-badge", `${ticket.direction || "LONG"} (${probVal}% Prob. Calibrada)`);
 
   // Resumen de niveles y tamaño
-  document.getElementById("modal-entry-price").textContent = store.formatPrice(ticket.entry_price);
-  document.getElementById("modal-stop-loss").textContent = `${store.formatPrice(ticket.stop_loss)} (-${ticket.risk_distance_pct || 0}%)`;
-  document.getElementById("modal-tp1").textContent = `${store.formatPrice(ticket.take_profit_1)} (+1.5R)`;
-  document.getElementById("modal-tp2").textContent = `${store.formatPrice(ticket.take_profit_2)} (+3.0R)`;
+  setTxt("modal-entry-price", store.formatPrice(ticket.entry_price));
+  setTxt("modal-stop-loss", `${store.formatPrice(ticket.stop_loss)} (-${distSl}%)`);
+  setTxt("modal-tp1", `${store.formatPrice(ticket.take_profit_1)} (+1.5R)`);
+  setTxt("modal-tp2", `${store.formatPrice(ticket.take_profit_2)} (+3.0R)`);
 
-  const pos = ticket.position_size || {};
-  document.getElementById("modal-position-shares").textContent = `${pos.shares || 1} uds`;
-  document.getElementById("modal-position-capital").textContent = store.formatPrice(pos.dollar_allocation || 0);
-  document.getElementById("modal-position-risk").textContent = store.formatPrice(pos.dollar_risk || 0);
+  setTxt("modal-position-shares", `${pos.shares || 1} uds`);
+  setTxt("modal-position-capital", store.formatPrice(dollarAlloc));
+  setTxt("modal-position-risk", store.formatPrice(dollarRisk));
 
   // Listas de razones, contradicciones y advertencias
   const reasonsEl = document.getElementById("modal-reasons-list");
-  reasonsEl.innerHTML = (ticket.reasons || []).map((r) => `<li>✅ ${r}</li>`).join("") || "<li>Estructura técnica y momentum favorables</li>";
+  if (reasonsEl) {
+    reasonsEl.innerHTML = (ticket.reasons || []).map((r) => `<li>✅ ${r}</li>`).join("") || "<li>Estructura técnica y confluencia institucional favorables</li>";
+  }
 
   const contraEl = document.getElementById("modal-contradictions-list");
-  contraEl.innerHTML = (ticket.contradictions || []).map((c) => `<li>⚠️ ${c}</li>`).join("") || "<li>Ninguna contradicción de peso detectada</li>";
+  if (contraEl) {
+    contraEl.innerHTML = (ticket.contradictions || []).map((c) => `<li>⚠️ ${c}</li>`).join("") || "<li>Ninguna contradicción de peso detectada</li>";
+  }
 
   const warnEl = document.getElementById("modal-warnings-list");
-  warnEl.innerHTML = (ticket.warnings || []).map((w) => `<li>🛑 ${w}</li>`).join("") || "<li>Volatilidad habitual de mercado</li>";
+  if (warnEl) {
+    warnEl.innerHTML = (ticket.warnings || []).map((w) => `<li>🛑 ${w}</li>`).join("") || "<li>Volatilidad habitual de mercado</li>";
+  }
 
-  document.getElementById("modal-invalidation-text").textContent = ticket.invalidation_condition || "Cierre de vela por debajo del Stop Loss antes de alcanzar TP1.";
+  setTxt("modal-invalidation-text", invalidationTxt);
 
   // Formatos de copia
   const copyText = `--- ORDEN DE TRADING EZ ---
-Activo: ${ticket.symbol} (${ticket.asset_name || ""})
-Dirección: ${ticket.direction}
+Activo: ${ticket.symbol} (${assetName})
+Dirección: ${ticket.direction || "LONG"}
 Entrada Apertura: ${store.formatPrice(ticket.entry_price)}
 Stop Loss: ${store.formatPrice(ticket.stop_loss)}
 Take Profit 1: ${store.formatPrice(ticket.take_profit_1)}
 Take Profit 2: ${store.formatPrice(ticket.take_profit_2)}
-Tamaño sugerido: ${pos.shares || 1} unidades (~${store.formatPrice(pos.dollar_allocation || 0)})
-Riesgo monetario: ${store.formatPrice(pos.dollar_risk || 0)}
-Probabilidad Calibrada: ${Math.round(ticket.calibrated_probability * 100)}%
-Invalidación: ${ticket.invalidation_condition || "Cierre bajo Stop Loss"}`;
+Tamaño sugerido: ${pos.shares || 1} unidades (~${store.formatPrice(dollarAlloc)})
+Riesgo monetario: ${store.formatPrice(dollarRisk)}
+Probabilidad Calibrada: ${probVal}%
+Invalidación: ${invalidationTxt}`;
 
-  document.getElementById("modal-copy-text").value = copyText;
+  setValue("modal-copy-text", copyText);
 
   const bracketJson = {
     symbol: ticket.symbol,
-    action: ticket.direction === "LONG" ? "BUY" : "SELL",
+    action: (ticket.direction || "LONG") === "LONG" ? "BUY" : "SELL",
     quantity: pos.shares || 1,
     orderType: "STOP_LIMIT",
     limitPrice: ticket.entry_price,
     stopLoss: { price: ticket.stop_loss },
     takeProfit: { price: ticket.take_profit_1 },
   };
-  document.getElementById("modal-copy-json").value = JSON.stringify(bracketJson, null, 2);
+  setValue("modal-copy-json", JSON.stringify(bracketJson, null, 2));
 
   // Explicación de IA inicial (reset)
   const aiBox = document.getElementById("modal-ai-explanation-content");
-  aiBox.innerHTML = `
-    <p>Haz clic en el botón <strong>"Generar Análisis IA"</strong> para obtener una explicación detallada en lenguaje natural validada contra alucinaciones.</p>
-  `;
+  if (aiBox) {
+    aiBox.innerHTML = `
+      <p>Haz clic en el botón <strong>"Generar Análisis IA"</strong> para obtener una explicación detallada en lenguaje natural validada contra alucinaciones.</p>
+    `;
+  }
 
-  // Abrir modal
+  // Abrir modal inmediatamente
   modal.classList.add("open");
 
   // Inicializar o actualizar gráfico Canvas
@@ -340,7 +366,7 @@ Invalidación: ${ticket.invalidation_condition || "Cierre bajo Stop Loss"}`;
     try {
       const histData = await api.getMarketHistory(ticket.symbol, "1d", 120);
       const canvas = document.getElementById("modal-chart-canvas");
-      if (canvas && histData.candles?.length) {
+      if (canvas && histData?.candles?.length) {
         modalChart = new FinancialCanvasChart("modal-chart-canvas", {
           showVolume: true,
           showIndicators: true,
@@ -361,17 +387,23 @@ Invalidación: ${ticket.invalidation_condition || "Cierre bajo Stop Loss"}`;
 }
 
 export function copyTicketText(ticket) {
+  if (!ticket) return;
   const pos = ticket.position_size || {};
+  const probVal = Math.round((ticket.calibrated_prob ?? ticket.calibrated_probability ?? 0.65) * 100);
+  const assetName = ticket.name || ticket.asset_name || ticket.symbol;
+  const dollarAlloc = pos.capital_allocated ?? pos.dollar_allocation ?? 0;
+  const dollarRisk = pos.risk_dollars ?? pos.dollar_risk ?? 0;
+
   const copyText = `--- ORDEN DE TRADING EZ ---
-Activo: ${ticket.symbol} (${ticket.asset_name || ""})
-Dirección: ${ticket.direction}
+Activo: ${ticket.symbol} (${assetName})
+Dirección: ${ticket.direction || "LONG"}
 Entrada Apertura: ${store.formatPrice(ticket.entry_price)}
 Stop Loss: ${store.formatPrice(ticket.stop_loss)}
 Take Profit 1: ${store.formatPrice(ticket.take_profit_1)}
 Take Profit 2: ${store.formatPrice(ticket.take_profit_2)}
-Tamaño sugerido: ${pos.shares || 1} unidades (~${store.formatPrice(pos.dollar_allocation || 0)})
-Riesgo monetario: ${store.formatPrice(pos.dollar_risk || 0)}
-Probabilidad Calibrada: ${Math.round(ticket.calibrated_probability * 100)}%`;
+Tamaño sugerido: ${pos.shares || 1} unidades (~${store.formatPrice(dollarAlloc)})
+Riesgo monetario: ${store.formatPrice(dollarRisk)}
+Probabilidad Calibrada: ${probVal}%`;
 
   navigator.clipboard.writeText(copyText).then(() => {
     store.showToast(`Orden para ${ticket.symbol} copiada al portapapeles`, "success");
