@@ -24,8 +24,9 @@ COPY config/ ./config/
 COPY src/ ./src/
 COPY frontend/ ./frontend/
 COPY scripts/ ./scripts/
+COPY data/ ./data/
 
-# Crear directorios de persistencia de caché, modelos y base de datos SQLite
+# Asegurar directorios de persistencia de caché, modelos y base de datos SQLite
 RUN mkdir -p data/cache/daily data/cache/intraday data/models data/db
 
 # Exponer el puerto configurado (Render inyecta su propio $PORT en runtime)
