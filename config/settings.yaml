@@ -1,0 +1,41 @@
+# Trading EZ - Configuración General del Sistema
+app:
+  name: "Trading EZ"
+  version: "1.0.0"
+  description: "Market Terminal Pro - Selección Cuantitativa y Calibración Fuera de Muestra"
+  env: "development"
+  port: 8000
+  host: "0.0.0.0"
+
+thresholds:
+  min_calibrated_prob: 0.60         # Mínimo 60% de probabilidad calibrada para entrar al ranking
+  min_expectancy_r: 0.15           # Expectancy neta mínima en R positiva
+  min_risk_reward: 1.5             # R:B mínimo (Take Profit 1 >= 1.5 * Riesgo)
+  max_stale_hours_stocks: 24       # Horas máximas sin actualización en stocks antes de BLOQUEADO
+  max_stale_hours_crypto: 4        # Horas máximas sin actualización en cripto antes de BLOQUEADO
+
+sizing:
+  default_capital: 10000.0         # Capital por defecto para cálculos ($10,000 USD)
+  default_risk_pct: 1.0            # 1.0% de riesgo por operación
+  max_position_size_pct: 25.0      # Máximo 25% de la cuenta en un único activo
+  max_open_positions: 5            # Máximo 5 operaciones simultáneas
+  max_daily_loss_pct: 3.0          # Límite de pérdida diaria (circuito de corte)
+  consecutive_losses_circuit: 4    # Pausa obligatoria tras 4 pérdidas consecutivas
+
+data:
+  cache_dir: "data/cache"
+  db_path: "data/db/trading_ez.db"
+  history_years: 5                 # Mínimo 5 años de datos para entrenamiento y validación
+  max_price_jump_pct: 0.40         # Alerta de dato corrupto: salto diario > 40% sin split/evento
+  max_gap_business_days: 4         # Máximo de días hábiles continuos sin datos antes de marcar error
+  default_provider: "yahoo"        # yahoo | alpaca | binance
+
+ml:
+  calibration_method: "isotonic"   # isotonic | sigmoid
+  walk_forward_splits: 5
+  train_years: 3
+  test_months: 6
+  embargo_days: 5                  # Días de purga/embargo para evitar fuga entre train y test
+  psi_drift_threshold: 0.20        # Umbral de Population Stability Index para alerta de drift
+  min_trades_for_validation: 100   # Mínimo de operaciones fuera de muestra para validar modelo
+  min_profit_factor_validation: 1.3

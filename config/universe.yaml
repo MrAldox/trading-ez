@@ -1,0 +1,222 @@
+# Trading EZ - Universo de Activos Configurable
+version: "1.0"
+
+settings:
+  min_dollar_volume_daily: 20000000  # $20M USD mínimo diario para evitar iliquidez
+  max_stale_hours_stocks: 24
+  max_stale_hours_crypto: 4
+
+assets:
+  # ACCIONES (S&P 500 y NASDAQ 100 líderes)
+  - symbol: "AAPL"
+    name: "Apple Inc."
+    asset_class: "stocks"
+    sector: "Technology"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "MSFT"
+    name: "Microsoft Corporation"
+    asset_class: "stocks"
+    sector: "Technology"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "NVDA"
+    name: "NVIDIA Corporation"
+    asset_class: "stocks"
+    sector: "Semiconductors"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "AMZN"
+    name: "Amazon.com Inc."
+    asset_class: "stocks"
+    sector: "Consumer Discretionary"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "GOOGL"
+    name: "Alphabet Inc."
+    asset_class: "stocks"
+    sector: "Communication Services"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "META"
+    name: "Meta Platforms Inc."
+    asset_class: "stocks"
+    sector: "Communication Services"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "TSLA"
+    name: "Tesla Inc."
+    asset_class: "stocks"
+    sector: "Consumer Discretionary"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 6.0
+    is_active: true
+
+  - symbol: "AMD"
+    name: "Advanced Micro Devices"
+    asset_class: "stocks"
+    sector: "Semiconductors"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "JPM"
+    name: "JPMorgan Chase & Co."
+    asset_class: "stocks"
+    sector: "Financials"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  - symbol: "V"
+    name: "Visa Inc."
+    asset_class: "stocks"
+    sector: "Financials"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 5.0
+    is_active: true
+
+  # ETFs LÍQUIDOS
+  - symbol: "SPY"
+    name: "SPDR S&P 500 ETF Trust"
+    asset_class: "etfs"
+    sector: "Broad Market"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 3.0
+    is_active: true
+
+  - symbol: "QQQ"
+    name: "Invesco QQQ Trust (Nasdaq 100)"
+    asset_class: "etfs"
+    sector: "Technology"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 3.0
+    is_active: true
+
+  - symbol: "IWM"
+    name: "iShares Russell 2000 ETF"
+    asset_class: "etfs"
+    sector: "Small Cap"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 4.0
+    is_active: true
+
+  - symbol: "XLF"
+    name: "Financial Select Sector SPDR"
+    asset_class: "etfs"
+    sector: "Financials"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 4.0
+    is_active: true
+
+  - symbol: "XLK"
+    name: "Technology Select Sector SPDR"
+    asset_class: "etfs"
+    sector: "Technology"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 4.0
+    is_active: true
+
+  - symbol: "TLT"
+    name: "iShares 20+ Year Treasury Bond ETF"
+    asset_class: "etfs"
+    sector: "Bonds"
+    market: "NASDAQ"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 4.0
+    is_active: true
+
+  # CRIPTOMONEDAS (Top capitalización, cotización 24/7)
+  - symbol: "BTC-USD"
+    name: "Bitcoin USD"
+    asset_class: "crypto"
+    sector: "Layer 1"
+    market: "CRYPTO"
+    currency: "USD"
+    tick_size: 0.50
+    est_cost_bps: 12.0
+    is_active: true
+
+  - symbol: "ETH-USD"
+    name: "Ethereum USD"
+    asset_class: "crypto"
+    sector: "Smart Contracts"
+    market: "CRYPTO"
+    currency: "USD"
+    tick_size: 0.10
+    est_cost_bps: 15.0
+    is_active: true
+
+  - symbol: "SOL-USD"
+    name: "Solana USD"
+    asset_class: "crypto"
+    sector: "Smart Contracts"
+    market: "CRYPTO"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 18.0
+    is_active: true
+
+  # MATERIAS PRIMAS (Vía ETFs líquidos)
+  - symbol: "GLD"
+    name: "SPDR Gold Shares"
+    asset_class: "commodities"
+    sector: "Precious Metals"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 4.0
+    is_active: true
+
+  - symbol: "USO"
+    name: "United States Oil Fund LP"
+    asset_class: "commodities"
+    sector: "Energy"
+    market: "NYSE"
+    currency: "USD"
+    tick_size: 0.01
+    est_cost_bps: 6.0
+    is_active: true
