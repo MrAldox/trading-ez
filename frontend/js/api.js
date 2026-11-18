@@ -89,6 +89,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify(order),
     }),
+  closePaperPosition: (positionId, reason = "MANUAL", exitPrice = null) =>
+    request("/paper/close", {
+      method: "POST",
+      body: JSON.stringify({
+        position_id: positionId,
+        reason: reason,
+        exit_price: exitPrice,
+      }),
+    }),
+  getClosedTrades: () => request("/paper/closed"),
+  getPaperNotifications: () => request("/paper/notifications"),
   resetPaperPortfolio: (capital = 10000.0) =>
     request("/paper/reset", {
       method: "POST",

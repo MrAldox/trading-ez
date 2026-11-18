@@ -91,24 +91,25 @@ export async function updateTickerTape() {
 
     if (!quotes.length) return;
 
-    // Duplicar elementos para animación infinita continua
+    // Duplicar elementos para animación continua
     const items = [...quotes, ...quotes];
     tapeContainer.innerHTML = items
       .map((q) => {
         const up = (q.change_pct || 0) >= 0;
-        const cls = up ? "up" : "down";
+        const clsBadge = up ? "badge-green" : "badge-red";
+        const arrow = up ? "▲" : "▼";
         const sign = up ? "+" : "";
         return `
-          <div class="tape-item ${cls}" data-sym="${q.symbol}">
-            <span class="tape-sym">${q.symbol}</span>
-            <span class="tape-price">${store.formatPrice(q.price)}</span>
-            <span class="tape-change">${sign}${(q.change_pct || 0).toFixed(2)}%</span>
+          <div class="ticker-index-item" data-sym="${q.symbol}">
+            <span class="ticker-index-name">${q.symbol}</span>
+            <span class="ticker-index-price">${store.formatPrice(q.price)}</span>
+            <span class="badge-pct ${clsBadge}">${sign}${(q.change_pct || 0).toFixed(2)}% ${arrow}</span>
           </div>
         `;
       })
       .join("");
 
-    tapeContainer.querySelectorAll(".tape-item").forEach((el) => {
+    tapeContainer.querySelectorAll(".ticker-index-item").forEach((el) => {
       el.addEventListener("click", () => {
         const sym = el.getAttribute("data-sym");
         loadSymbolChart(sym);

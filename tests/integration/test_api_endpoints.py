@@ -111,6 +111,29 @@ def test_paper_trading_lifecycle(client):
     pos = order_res.json()["position"]
     assert pos["symbol"] == "SPY"
     assert pos["shares"] == 5
+    pos_id = order_res.json()["position_id"]
+
+    # 4. Cerrar posición simulada en TP1
+    close_res = client.post(
+        "/api/paper/close",
+        json={"position_id": pos_id, "reason": "TP1"},
+    )
+    assert close_res.status_code == 200
+    close_data = close_res.json()
+    assert close_data["status"] == "CLOSED"
+    assert "realized_pnl" in close_data
+
+    # 5. Consultar resumen de operaciones cerradas
+    closed_res = client.get("/api/paper/closed")
+    assert closed_res.status_code == 200
+    closed_json = closed_res.json()
+    assert closed_json["total_closed"] >= 1
+    assert "win_rate" in closed_json
+
+    # 6. Consultar notificaciones
+    notif_res = client.get("/api/paper/notifications")
+    assert notif_res.status_code == 200
+    assert "notifications" in notif_res.json()
 
 def test_screener_endpoint(client):
     response = client.get("/api/screener?above_ema200=true")

@@ -105,6 +105,11 @@ class PaperPositionModel(Base):
     unrealized_pnl = Column(Float, default=0.0)
     opened_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     status = Column(String(16), default="OPEN")  # OPEN | CLOSED
+    exit_price = Column(Float, default=0.0, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    close_reason = Column(String(32), default="", nullable=True)
+    realized_pnl = Column(Float, default=0.0, nullable=True)
+    realized_r = Column(Float, default=0.0, nullable=True)
 
 class TradingJournalModel(Base):
     __tablename__ = "trading_journal"
@@ -133,3 +138,25 @@ class AlertModel(Base):
 
 # Crear todas las tablas en la base de datos
 Base.metadata.create_all(bind=engine)
+
+# Auto-migración segura para columnas nuevas en paper_positions
+def _ensure_paper_columns():
+    try:
+        import sqlalchemy as sa
+        with engine.connect() as conn:
+            insp = sa.inspect(engine)
+            cols = [c['name'] for c in insp.get_columns('paper_positions')]
+            for col_name, col_def in [
+                ('exit_price', 'FLOAT DEFAULT 0.0'),
+                ('closed_at', 'DATETIME'),
+                ('close_reason', "VARCHAR(32) DEFAULT ''"),
+                ('realized_pnl', 'FLOAT DEFAULT 0.0'),
+                ('realized_r', 'FLOAT DEFAULT 0.0'),
+            ]:
+                if col_name not in cols:
+                    conn.execute(sa.text(f"ALTER TABLE paper_positions ADD COLUMN {col_name} {col_def}"))
+            conn.commit()
+    except Exception:
+        pass
+
+_ensure_paper_columns()

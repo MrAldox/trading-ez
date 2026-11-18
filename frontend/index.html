@@ -5,11 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Trading EZ · Market Terminal Pro</title>
   
-  <!-- Estilos del Sistema de Diseño Bloomberg / Koyfin -->
-  <link rel="stylesheet" href="/static/css/variables.css" />
-  <link rel="stylesheet" href="/static/css/base.css" />
-  <link rel="stylesheet" href="/static/css/components.css" />
-  <link rel="stylesheet" href="/static/css/charts.css" />
+  <!-- Google Fonts: Inter & JetBrains Mono (INVERT Pro Standard) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons (INVERT Pro Standard) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Estilos del Sistema de Diseño INVERT Pro -->
+  <link rel="stylesheet" href="/static/css/variables.css?v=2.7.0" />
+  <link rel="stylesheet" href="/static/css/base.css?v=2.7.0" />
+  <link rel="stylesheet" href="/static/css/components.css?v=2.7.0" />
+  <link rel="stylesheet" href="/static/css/charts.css?v=2.7.0" />
 </head>
 <body>
 
@@ -19,58 +27,173 @@
     <span>Herramienta cuantitativa de apoyo a la decisión, no es asesoría financiera. El trading conlleva riesgo de pérdida de capital.</span>
   </div>
 
-  <!-- Encabezado Principal del Terminal -->
-  <header class="terminal-header">
-    <div class="brand-section">
-      <div class="brand-logo">
-        TRADING <span>EZ</span>
+  <!-- ================= TOP TICKER RIBBON (INVERT STYLE) ================= -->
+  <div class="top-ticker-bar">
+    <div class="ticker-tape-wrapper" id="header-ticker-tape">
+      <div class="ticker-index-item" data-sym="SPY">
+        <span class="ticker-index-name">S&P 500 (SPY)</span>
+        <span class="ticker-index-price">$592.50</span>
+        <span class="badge-pct badge-green">+0.45% ▲</span>
       </div>
-      <div id="global-system-status" class="status-badge uncalibrated">
-        <span class="indicator-dot"></span> SIN CALIBRAR
+      <div class="ticker-index-item" data-sym="QQQ">
+        <span class="ticker-index-name">NASDAQ (QQQ)</span>
+        <span class="ticker-index-price">$508.20</span>
+        <span class="badge-pct badge-green">+0.62% ▲</span>
       </div>
-    </div>
-
-    <div class="header-controls">
-      <div id="header-kill-zone-pill" class="status-badge validated" style="cursor: pointer;" title="Ventana de Inyección Institucional">
-        <span class="indicator-dot"></span> <span id="header-kill-zone-text">NY Open</span>
+      <div class="ticker-index-item" data-sym="DIA">
+        <span class="ticker-index-name">DOW JONES</span>
+        <span class="ticker-index-price">$438.10</span>
+        <span class="badge-pct badge-green">+0.18% ▲</span>
       </div>
-      <button id="btn-open-glossary" class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;">
-        📖 Glosario Cuant
-      </button>
-      <button id="theme-toggle-btn" class="btn btn-secondary" style="padding: 6px 10px;" title="Cambiar Tema">
-        ☀️
-      </button>
-    </div>
-  </header>
-
-  <!-- Cinta de Tickers (Ticker Tape en Vivo) -->
-  <div class="ticker-tape-container">
-    <div id="header-ticker-tape" class="ticker-tape">
-      <div class="tape-item up"><span class="tape-sym">SPY</span><span class="tape-price">$592.50</span><span class="tape-change">+0.45%</span></div>
-      <div class="tape-item up"><span class="tape-sym">QQQ</span><span class="tape-price">$508.20</span><span class="tape-change">+0.62%</span></div>
-      <div class="tape-item up"><span class="tape-sym">BTC-USD</span><span class="tape-price">$91,450.00</span><span class="tape-change">+2.10%</span></div>
-      <div class="tape-item up"><span class="tape-sym">NVDA</span><span class="tape-price">$145.80</span><span class="tape-change">+1.20%</span></div>
-      <div class="tape-item down"><span class="tape-sym">AAPL</span><span class="tape-price">$228.30</span><span class="tape-change">-0.15%</span></div>
-      <div class="tape-item up"><span class="tape-sym">ETH-USD</span><span class="tape-price">$3,120.00</span><span class="tape-change">+1.80%</span></div>
-      <div class="tape-item up"><span class="tape-sym">MSFT</span><span class="tape-price">$425.00</span><span class="tape-change">+0.35%</span></div>
-      <div class="tape-item up"><span class="tape-sym">SOL-USD</span><span class="tape-price">$215.40</span><span class="tape-change">+3.40%</span></div>
+      <div class="ticker-index-item" data-sym="BTC-USD">
+        <span class="ticker-index-name">BITCOIN</span>
+        <span class="ticker-index-price">$91,450.00</span>
+        <span class="badge-pct badge-green">+2.10% ▲</span>
+      </div>
+      <div class="ticker-index-item" data-sym="ETH-USD">
+        <span class="ticker-index-name">ETHEREUM</span>
+        <span class="ticker-index-price">$3,120.00</span>
+        <span class="badge-pct badge-green">+1.80% ▲</span>
+      </div>
+      <div class="ticker-index-item" data-sym="NVDA">
+        <span class="ticker-index-name">NVIDIA</span>
+        <span class="ticker-index-price">$145.80</span>
+        <span class="badge-pct badge-green">+1.20% ▲</span>
+      </div>
+      <div class="ticker-index-item" data-sym="AAPL">
+        <span class="ticker-index-name">APPLE</span>
+        <span class="ticker-index-price">$228.30</span>
+        <span class="badge-pct badge-red">-0.15% ▼</span>
+      </div>
+      <div class="ticker-index-item" data-sym="GLD">
+        <span class="ticker-index-name">ORO</span>
+        <span class="ticker-index-price">$242.60</span>
+        <span class="badge-pct badge-green">+0.32% ▲</span>
+      </div>
+      <div class="ticker-index-item" data-sym="USO">
+        <span class="ticker-index-name">PETRÓLEO WTI</span>
+        <span class="ticker-index-price">$71.40</span>
+        <span class="badge-pct badge-red">-0.42% ▼</span>
+      </div>
     </div>
   </div>
 
-  <!-- Barra de Navegación de las 12 Pestañas Institucionales -->
-  <nav class="tabs-navigation">
-    <button class="nav-tab-btn active" data-tab="opportunities">🎯 Oportunidades</button>
-    <button class="nav-tab-btn" data-tab="advisor">🤖 Asesor Financiero IA</button>
-    <button class="nav-tab-btn" data-tab="market">📡 Mercado en Vivo</button>
-    <button class="nav-tab-btn" data-tab="heatmap">🗺️ Mapa de Calor</button>
-    <button class="nav-tab-btn" data-tab="paper">💼 Paper Trading</button>
-    <button class="nav-tab-btn" data-tab="backtest">📈 Backtest Riguroso</button>
-    <button class="nav-tab-btn" data-tab="screener">🔍 Escáner</button>
-    <button class="nav-tab-btn" data-tab="news">📰 Noticias</button>
-    <button class="nav-tab-btn" data-tab="calendar">📅 Calendario</button>
-    <button class="nav-tab-btn" data-tab="journal">📓 Diario</button>
-    <button class="nav-tab-btn" data-tab="alerts">🔔 Alertas</button>
-    <button class="nav-tab-btn" data-tab="model-status">🔬 Estado del Modelo</button>
+  <!-- ================= ENCABEZADO PRINCIPAL (INVERT PRO TERMINAL) ================= -->
+  <header class="app-header">
+    <div class="header-inner">
+      <!-- Brand & Status -->
+      <div class="brand-section">
+        <div class="logo-badge">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="brand-text">
+          <h1>
+            TRADING EZ <span class="brand-tag">PRO TERMINAL</span>
+          </h1>
+        </div>
+        <div class="market-status-pill">
+          <div class="status-dot"></div>
+          <span id="marketStatusText">MERCADO EN VIVO · ICT / NY &amp; LONDON</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="header-actions">
+        <!-- Kill Zones Pill -->
+        <div id="header-kill-zone-pill" class="kz-pill" title="Ventana Horaria Bancaria Activa">
+          <i class="fa-regular fa-clock"></i> <span id="header-kill-zone-text">NY Open</span>
+        </div>
+
+        <!-- Live Refresh Countdown Pill -->
+        <div class="live-refresh-pill" title="Actualización automática de precios">
+          <i class="fa-solid fa-bolt" style="color: var(--color-accent);"></i>
+          <span class="refresh-timer" id="refreshTimer">15s</span>
+        </div>
+
+        <!-- Manual refresh button -->
+        <button id="manualRefreshBtn" class="btn-icon" title="Actualizar datos ahora">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+
+        <!-- Notifications button with unread count -->
+        <button id="header-notif-btn" class="btn-icon" title="Ver Notificaciones de Cierres">
+          <i class="fa-solid fa-bell"></i>
+          <span class="alerts-badge-count" id="notif-badge-count" style="display:none;">0</span>
+        </button>
+
+        <!-- Glossary Button -->
+        <button id="btn-open-glossary" class="btn-icon" title="Glosario Cuantitativo">
+          <i class="fa-solid fa-circle-question"></i>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle-btn" class="btn-icon" title="Cambiar Tema Oscuro / Claro">
+          <i class="fa-solid fa-sun" id="themeIcon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= SUB-NAVBAR & 4 CORE TABS + TOOLS DROPDOWN ================= -->
+  <nav class="sub-navbar">
+    <div class="sub-navbar-container">
+      <div class="nav-tabs-group">
+        <button class="nav-tab-btn active" data-tab="opportunities" id="nav-tab-opportunities">
+          <i class="fa-solid fa-crosshairs" style="color: var(--color-accent);"></i>
+          <span>🎯 Oportunidades</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="advisor" id="nav-tab-advisor">
+          <i class="fa-solid fa-robot" style="color: #a78bfa;"></i>
+          <span>🤖 Asesor Financiero IA</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="paper" id="nav-tab-paper">
+          <i class="fa-solid fa-wallet" style="color: #34d399;"></i>
+          <span>💼 Paper Trading</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="notifications" id="nav-tab-notifications">
+          <i class="fa-solid fa-bell" style="color: #f59e0b;"></i>
+          <span>🔔 Notificaciones &amp; Cierres</span>
+        </button>
+      </div>
+
+      <!-- Menú desplegable para herramientas adicionales -->
+      <div class="nav-tools-dropdown" id="nav-tools-dropdown">
+        <button class="nav-tools-trigger" id="btn-tools-trigger">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Más Herramientas</span>
+          <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+        </button>
+        <div class="nav-dropdown-menu" id="nav-dropdown-menu">
+          <button class="dropdown-item-btn" data-tab="market">
+            <i class="fa-solid fa-chart-line" style="color: #38bdf8;"></i> Mercado en Vivo
+          </button>
+          <button class="dropdown-item-btn" data-tab="heatmap">
+            <i class="fa-solid fa-fire" style="color: #f97316;"></i> Mapa de Calor
+          </button>
+          <button class="dropdown-item-btn" data-tab="backtest">
+            <i class="fa-solid fa-chart-pie" style="color: #10b981;"></i> Backtest Riguroso
+          </button>
+          <button class="dropdown-item-btn" data-tab="screener">
+            <i class="fa-solid fa-filter" style="color: #60a5fa;"></i> Escáner Cuantitativo
+          </button>
+          <button class="dropdown-item-btn" data-tab="news">
+            <i class="fa-solid fa-newspaper" style="color: #94a3b8;"></i> Noticias Bursátiles
+          </button>
+          <button class="dropdown-item-btn" data-tab="calendar">
+            <i class="fa-solid fa-calendar-days" style="color: #f59e0b;"></i> Calendario Macroeconómico
+          </button>
+          <button class="dropdown-item-btn" data-tab="journal">
+            <i class="fa-solid fa-book-journal-whills" style="color: #e879f9;"></i> Diario de Trading
+          </button>
+          <button class="dropdown-item-btn" data-tab="alerts">
+            <i class="fa-solid fa-bullhorn" style="color: #38bdf8;"></i> Alertas de Precio
+          </button>
+          <button class="dropdown-item-btn" data-tab="model-status">
+            <i class="fa-solid fa-microscope" style="color: #a78bfa;"></i> Estado del Modelo
+          </button>
+        </div>
+      </div>
+    </div>
   </nav>
 
   <!-- Contenedor Principal de Vistas -->
@@ -241,6 +364,7 @@
     <section id="view-market" class="tab-view"></section>
     <section id="view-heatmap" class="tab-view"></section>
     <section id="view-paper" class="tab-view"></section>
+    <section id="view-notifications" class="tab-view"></section>
     <section id="view-backtest" class="tab-view"></section>
     <section id="view-screener" class="tab-view"></section>
     <section id="view-news" class="tab-view"></section>
