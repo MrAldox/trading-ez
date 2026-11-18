@@ -16,7 +16,7 @@ import { initAlertsView } from "./views/alerts.js";
 import { initModelStatusView } from "./views/model_status.js";
 import { openGlossaryModal, closeGlossaryModal } from "./views/glossary.js";
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function bootApp() {
   console.log("Iniciando Trading EZ Market Terminal Pro...");
 
   // 1. Inicializar Tema (Dark / Light)
@@ -132,13 +132,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 7. Arrancar primera vista (Oportunidades) y cinta de tickers
   switchTab("opportunities");
-  await updateTickerTape();
+  updateTickerTape();
 
   // Actualización periódica de cotizaciones (cada 30 segundos)
   setInterval(() => {
     updateTickerTape();
   }, 30000);
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootApp);
+} else {
+  bootApp();
+}
 
 function setupTicketModalActions() {
   // Pestañas internas del modal

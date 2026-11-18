@@ -11,66 +11,72 @@ export async function initOpportunitiesView() {
   const container = document.getElementById("view-opportunities");
   if (!container) return;
 
-  container.innerHTML = `
-    <!-- Barra Superior de Parámetros y Filtros Cuantitativos -->
-    <div class="filters-bar">
-      <div class="filter-group">
-        <label>Clase:</label>
-        <select id="opp-filter-class" style="width: auto;">
-          <option value="all">Todos los Activos</option>
-          <option value="stocks">Acciones (S&P 500 / Nasdaq)</option>
-          <option value="crypto">Cripto 24/7</option>
-          <option value="etf">ETFs Líquidos</option>
-          <option value="commodities">Materias Primas / FX</option>
-        </select>
+  if (!document.getElementById("opp-filter-class")) {
+    container.innerHTML = `
+      <!-- Barra Superior de Parámetros y Filtros Cuantitativos -->
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>Clase:</label>
+          <select id="opp-filter-class" style="width: auto;">
+            <option value="all">Todos los Activos</option>
+            <option value="stocks">Acciones (S&P 500 / Nasdaq)</option>
+            <option value="crypto">Cripto 24/7</option>
+            <option value="etf">ETFs Líquidos</option>
+            <option value="commodities">Materias Primas / FX</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Horizonte:</label>
+          <select id="opp-filter-horizon" style="width: auto;">
+            <option value="medium" selected>Medio (10-20 velas)</option>
+            <option value="short">Corto (3-5 velas)</option>
+            <option value="long">Largo (30-60 velas)</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Capital USD:</label>
+          <input type="number" id="opp-capital" value="10000" min="1000" step="1000" style="width: 110px;" />
+        </div>
+
+        <div class="filter-group">
+          <label>Riesgo/Trade:</label>
+          <select id="opp-risk" style="width: auto;">
+            <option value="0.5">0.5% (Conservador)</option>
+            <option value="1.0" selected>1.0% (Equilibrado)</option>
+            <option value="2.0">2.0% (Agresivo)</option>
+          </select>
+        </div>
+
+        <button id="btn-refresh-opps" class="btn btn-primary" style="margin-left: auto;">
+          <span>🔄</span> Escanear Mercado
+        </button>
       </div>
 
-      <div class="filter-group">
-        <label>Horizonte:</label>
-        <select id="opp-filter-horizon" style="width: auto;">
-          <option value="medium" selected>Medio (10-20 velas)</option>
-          <option value="short">Corto (3-5 velas)</option>
-          <option value="long">Largo (30-60 velas)</option>
-        </select>
+      <!-- Banner de Auditoría e Historial del Modelo -->
+      <div id="opp-history-banner" class="glass-card" style="margin-bottom: 16px; display: none;"></div>
+
+      <!-- Contenedor Principal de Tarjetas -->
+      <div id="opp-cards-container">
+        <div class="empty-state">
+          <div class="empty-state-icon">⏳</div>
+          <div class="empty-state-title">Cargando oportunidades del mercado...</div>
+        </div>
       </div>
+    `;
+  }
 
-      <div class="filter-group">
-        <label>Capital USD:</label>
-        <input type="number" id="opp-capital" value="10000" min="1000" step="1000" style="width: 110px;" />
-      </div>
-
-      <div class="filter-group">
-        <label>Riesgo/Trade:</label>
-        <select id="opp-risk" style="width: auto;">
-          <option value="0.5">0.5% (Conservador)</option>
-          <option value="1.0" selected>1.0% (Equilibrado)</option>
-          <option value="2.0">2.0% (Agresivo)</option>
-        </select>
-      </div>
-
-      <button id="btn-refresh-opps" class="btn btn-primary" style="margin-left: auto;">
-        <span>🔄</span> Escanear Mercado
-      </button>
-    </div>
-
-    <!-- Banner de Auditoría e Historial del Modelo -->
-    <div id="opp-history-banner" class="glass-card" style="margin-bottom: 16px; display: none;"></div>
-
-    <!-- Contenedor Principal de Tarjetas -->
-    <div id="opp-cards-container">
-      <div class="empty-state">
-        <div class="empty-state-icon">⏳</div>
-        <div class="empty-state-title">Cargando oportunidades del mercado...</div>
-      </div>
-    </div>
-  `;
-
-  // Listeners de controles
-  document.getElementById("btn-refresh-opps").addEventListener("click", () => loadOpportunities(true));
-  document.getElementById("opp-filter-class").addEventListener("change", () => loadOpportunities());
-  document.getElementById("opp-filter-horizon").addEventListener("change", () => loadOpportunities());
-  document.getElementById("opp-capital").addEventListener("change", () => loadOpportunities());
-  document.getElementById("opp-risk").addEventListener("change", () => loadOpportunities());
+  // Listeners de controles (evitar duplicados con flag dataset)
+  const btnRefresh = document.getElementById("btn-refresh-opps");
+  if (btnRefresh && !btnRefresh.dataset.bound) {
+    btnRefresh.dataset.bound = "true";
+    btnRefresh.addEventListener("click", () => loadOpportunities(true));
+    document.getElementById("opp-filter-class")?.addEventListener("change", () => loadOpportunities());
+    document.getElementById("opp-filter-horizon")?.addEventListener("change", () => loadOpportunities());
+    document.getElementById("opp-capital")?.addEventListener("change", () => loadOpportunities());
+    document.getElementById("opp-risk")?.addEventListener("change", () => loadOpportunities());
+  }
 
   await loadOpportunities();
 }
@@ -102,11 +108,12 @@ export async function loadOpportunities(forceRefresh = false) {
       force_refresh: forceRefresh,
     });
 
-    // Actualizar badge de estado en el header
+    // Actualizar badge de estado en el header de forma segura
+    const statusVal = data.status || data.system_status?.model_status || "SIN CALIBRAR";
     const statusBadge = document.getElementById("global-system-status");
     if (statusBadge) {
-      statusBadge.className = `status-badge ${data.status.toLowerCase().replace(/\s+/g, "_")}`;
-      statusBadge.innerHTML = `<span class="indicator-dot"></span> ${data.status}`;
+      statusBadge.className = `status-badge ${String(statusVal).toLowerCase().replace(/[\s-]+/g, "_")}`;
+      statusBadge.innerHTML = `<span class="indicator-dot"></span> ${statusVal}`;
     }
 
     // Banner de métricas históricas de honestidad

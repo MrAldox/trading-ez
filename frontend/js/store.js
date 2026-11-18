@@ -4,8 +4,13 @@
 
 class TerminalStore {
   constructor() {
+    let initialTheme = "dark";
+    try {
+      initialTheme = localStorage.getItem("trading_ez_theme") || "dark";
+    } catch (_) {}
+
     this.state = {
-      theme: localStorage.getItem("trading_ez_theme") || "dark",
+      theme: initialTheme,
       currentTab: "opportunities",
       opportunities: [],
       systemStatus: "CARGANDO",
@@ -48,7 +53,9 @@ class TerminalStore {
 
   setTheme(theme) {
     this.state.theme = theme;
-    localStorage.setItem("trading_ez_theme", theme);
+    try {
+      localStorage.setItem("trading_ez_theme", theme);
+    } catch (_) {}
     document.documentElement.setAttribute("data-theme", theme);
     this.notify("theme_changed", theme);
   }
