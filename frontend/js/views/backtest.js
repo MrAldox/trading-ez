@@ -51,8 +51,11 @@ export async function initBacktestView() {
   `;
 
   document.getElementById("btn-run-backtest").addEventListener("click", () => runNewBacktest());
-
-  await loadLatestBacktest();
+  try {
+    await loadLatestBacktest();
+  } catch (e) {
+    console.warn("Backtest initial load error:", e);
+  }
 }
 
 export async function loadLatestBacktest() {

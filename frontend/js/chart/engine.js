@@ -4,12 +4,16 @@
  * líneas de orden (Entrada, Stop Loss, TP1, TP2) y crosshair interactivo.
  */
 
-export class CanvasChartEngine {
+export class FinancialCanvasChart {
   constructor(canvasElement, options = {}) {
-    this.canvas = canvasElement;
+    this.canvas = typeof canvasElement === "string" ? document.getElementById(canvasElement) : canvasElement;
+    if (!this.canvas) {
+      console.warn(`[CanvasChart] Elemento no encontrado: ${canvasElement}`);
+      return;
+    }
     this.ctx = this.canvas.getContext("2d");
     this.data = [];
-    this.levels = options.levels || null; // { entry, stop, tp1, tp2 }
+    this.levels = options.levels || options.tradeLevels || null; // { entry, stop, tp1, tp2 }
     this.crosshair = { active: false, x: 0, y: 0 };
 
     this.padding = { top: 20, right: 65, bottom: 25, left: 10 };
@@ -263,3 +267,5 @@ export class CanvasChartEngine {
     }
   }
 }
+
+export { FinancialCanvasChart as CanvasChartEngine };

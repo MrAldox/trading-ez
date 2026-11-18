@@ -94,7 +94,11 @@ export async function initPaperView() {
     }
   });
 
-  await loadPaperPortfolio();
+  try {
+    await loadPaperPortfolio();
+  } catch (e) {
+    console.warn("Paper initial load error:", e);
+  }
 }
 
 export async function loadPaperPortfolio() {

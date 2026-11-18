@@ -31,7 +31,11 @@ export async function initHeatmapView() {
   `;
 
   document.getElementById("btn-refresh-heatmap").addEventListener("click", () => loadHeatmap());
-  await loadHeatmap();
+  try {
+    await loadHeatmap();
+  } catch (e) {
+    console.warn("Heatmap error:", e);
+  }
 }
 
 export async function loadHeatmap() {

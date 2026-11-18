@@ -29,7 +29,11 @@ export async function initNewsView() {
   `;
 
   document.getElementById("btn-refresh-news").addEventListener("click", () => loadNews());
-  await loadNews();
+  try {
+    await loadNews();
+  } catch (e) {
+    console.warn("News initial load error:", e);
+  }
 }
 
 export async function loadNews() {

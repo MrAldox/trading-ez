@@ -13,25 +13,70 @@ from src.data_providers.cache_manager import CacheManager
 router = APIRouter(prefix="/api/market", tags=["Mercado"])
 cache_mgr = CacheManager()
 
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+_LIVE_CACHE: Dict[str, Any] = {}
+_LIVE_CACHE_EXPIRES: float = 0.0
+
+def _fetch_single_quote(sym: str) -> Optional[Dict[str, Any]]:
+    try:
+        q = data_manager.fetch_quote(sym)
+        meta = settings.assets_by_symbol.get(sym)
+        q["name"] = meta.name if meta else sym
+        q["asset_class"] = meta.asset_class if meta else "stocks"
+        q["sector"] = meta.sector if meta else "General"
+        return q
+    except Exception:
+        # Fallback ultra-rápido a última barra de caché local
+        cached = cache_mgr.get_daily(sym)
+        if cached:
+            df, _ = cached
+            if not df.empty:
+                last_p = round(float(df["close"].iloc[-1]), 2)
+                prev_p = round(float(df["close"].iloc[-2]), 2) if len(df) > 1 else last_p
+                chg = round(last_p - prev_p, 2)
+                chg_pct = round((chg / prev_p) * 100.0, 2) if prev_p > 0 else 0.0
+                meta = settings.assets_by_symbol.get(sym)
+                return {
+                    "symbol": sym,
+                    "name": meta.name if meta else sym,
+                    "asset_class": meta.asset_class if meta else "stocks",
+                    "sector": meta.sector if meta else "General",
+                    "price": last_p,
+                    "previous_close": prev_p,
+                    "change": chg,
+                    "change_pct": chg_pct,
+                    "volume": int(df["volume"].iloc[-1]),
+                    "source": "cache",
+                }
+        return None
+
 @router.get("/live")
 def get_live_market(symbols: Optional[str] = Query(None, description="Símbolos separados por coma")):
-    """Cotizaciones en tiempo real para la cinta de tickers y watchlist."""
+    """Cotizaciones en tiempo real para la cinta de tickers y watchlist con caché y concurrencia."""
+    global _LIVE_CACHE, _LIVE_CACHE_EXPIRES
+    now = time.time()
+
+    if not symbols and _LIVE_CACHE and now < _LIVE_CACHE_EXPIRES:
+        return {"count": len(_LIVE_CACHE), "quotes": list(_LIVE_CACHE.values())}
+
     if symbols:
         sym_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
     else:
         sym_list = [a.symbol for a in settings.universe]
 
     results = []
-    for sym in sym_list:
-        try:
-            q = data_manager.fetch_quote(sym)
-            meta = settings.assets_by_symbol.get(sym)
-            q["name"] = meta.name if meta else sym
-            q["asset_class"] = meta.asset_class if meta else "stocks"
-            q["sector"] = meta.sector if meta else "General"
-            results.append(q)
-        except Exception:
-            continue
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = {executor.submit(_fetch_single_quote, sym): sym for sym in sym_list}
+        for future in futures:
+            res = future.result()
+            if res:
+                results.append(res)
+
+    if not symbols and results:
+        _LIVE_CACHE = {r["symbol"]: r for r in results}
+        _LIVE_CACHE_EXPIRES = now + 25.0  # Caché de 25 segundos
 
     return {"count": len(results), "quotes": results}
 

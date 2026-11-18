@@ -58,40 +58,44 @@ async function bootApp() {
     // Carga perezosa de la vista
     if (!initializedTabs.has(tabId)) {
       initializedTabs.add(tabId);
-      switch (tabId) {
-        case "opportunities":
-          initOpportunitiesView();
-          break;
-        case "market":
-          initMarketView();
-          break;
-        case "heatmap":
-          initHeatmapView();
-          break;
-        case "paper":
-          initPaperView();
-          break;
-        case "backtest":
-          initBacktestView();
-          break;
-        case "screener":
-          initScreenerView();
-          break;
-        case "news":
-          initNewsView();
-          break;
-        case "calendar":
-          initCalendarView();
-          break;
-        case "journal":
-          initJournalView();
-          break;
-        case "alerts":
-          initAlertsView();
-          break;
-        case "model-status":
-          initModelStatusView();
-          break;
+      try {
+        switch (tabId) {
+          case "opportunities":
+            initOpportunitiesView();
+            break;
+          case "market":
+            initMarketView();
+            break;
+          case "heatmap":
+            initHeatmapView();
+            break;
+          case "paper":
+            initPaperView();
+            break;
+          case "backtest":
+            initBacktestView();
+            break;
+          case "screener":
+            initScreenerView();
+            break;
+          case "news":
+            initNewsView();
+            break;
+          case "calendar":
+            initCalendarView();
+            break;
+          case "journal":
+            initJournalView();
+            break;
+          case "alerts":
+            initAlertsView();
+            break;
+          case "model-status":
+            initModelStatusView();
+            break;
+        }
+      } catch (err) {
+        console.error(`[Trading EZ] Error inicializando vista ${tabId}:`, err);
       }
     }
   }

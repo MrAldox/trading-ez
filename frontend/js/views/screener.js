@@ -91,7 +91,11 @@ export async function initScreenerView() {
   `;
 
   document.getElementById("btn-run-screener").addEventListener("click", () => executeScreener());
-  await executeScreener();
+  try {
+    await executeScreener();
+  } catch (e) {
+    console.warn("Screener initial load error:", e);
+  }
 }
 
 export async function executeScreener() {

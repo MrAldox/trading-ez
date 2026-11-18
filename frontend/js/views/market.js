@@ -68,8 +68,17 @@ export async function initMarketView() {
 
   document.getElementById("btn-refresh-market").addEventListener("click", () => loadMarketData());
 
-  await loadMarketData();
-  await loadSymbolChart(currentSymbol);
+  try {
+    await loadMarketData();
+  } catch (e) {
+    console.warn("Mercado: error cargando cotizaciones iniciales:", e);
+  }
+
+  try {
+    await loadSymbolChart(currentSymbol);
+  } catch (e) {
+    console.warn("Mercado: error cargando gráfico inicial:", e);
+  }
 }
 
 export async function updateTickerTape() {
