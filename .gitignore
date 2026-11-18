@@ -1,0 +1,24 @@
+# Python & Pytest
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Entornos virtuales
+.venv/
+env/
+venv/
+ENV/
+
+# Logs y temporales
+*.log
+scratch/
+.system_generated/
+
+# Archivos de entorno con secretos
+.env
+
+# Modelos binarios grandes si los hubiere
+# data/models/*.pkl
