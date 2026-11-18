@@ -193,10 +193,13 @@ class ConfluenceEngine:
                 candidate = {
                     "symbol": sym,
                     "name": asset.name,
+                    "asset_name": asset.name,
                     "asset_class": asset.asset_class,
                     "sector": asset.sector,
+                    "horizon": "MEDIO (10-20 VELAS)",
                     "strategy_type": "CONFLUENCIA INSTITUCIONAL (SMART MONEY & HORARIOS BANCARIOS)",
                     "calibrated_prob": round(calibrated_prob, 4),
+                    "calibrated_probability": round(calibrated_prob, 4),
                     "expected_r": exp_r,
                     "risk_reward_ratio": rr_ratio,
                     "direction": direction,
@@ -208,10 +211,13 @@ class ConfluenceEngine:
                     "distance_sl_pct": round((abs(entry_p - stop_p) / entry_p) * 100.0, 2),
                     "distance_tp1_pct": round((abs(tp1_p - entry_p) / entry_p) * 100.0, 2),
                     "distance_tp2_pct": round((abs(tp2_p - entry_p) / entry_p) * 100.0, 2),
+                    "risk_distance_pct": round((abs(entry_p - stop_p) / entry_p) * 100.0, 2),
                     "position_size": {
                         "shares": pos_size.effective_shares,
                         "capital_allocated": pos_size.effective_notional,
+                        "dollar_allocation": pos_size.effective_notional,
                         "risk_dollars": pos_size.effective_risk_dollars,
+                        "dollar_risk": pos_size.effective_risk_dollars,
                         "pct_portfolio": pos_size.portfolio_pct,
                     },
                     "recommended_execution_window": best_execution_window,
@@ -220,6 +226,9 @@ class ConfluenceEngine:
                     "invalidation_criteria": (
                         f"La tesis institucional queda cancelada de inmediato si el precio perfora el Stop Loss a ${stop_p:.2f} "
                         "o si el volumen vendedor absorbe las órdenes de soporte con cierre de vela en gráficos menores."
+                    ),
+                    "invalidation_condition": (
+                        f"Cierre de vela por debajo del Stop Loss a ${stop_p:.2f} antes de alcanzar el objetivo."
                     ),
                     "data_source": data_source,
                     "model_version": "SmartMoney-Confluence-v2.5",
