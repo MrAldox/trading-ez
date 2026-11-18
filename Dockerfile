@@ -4,6 +4,7 @@ FROM python:3.13-slim
 # Evitar escritura de bytecode y buffers de salida en logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     PORT=8000 \
     HOST=0.0.0.0
 
@@ -33,4 +34,4 @@ RUN mkdir -p data/cache/daily data/cache/intraday data/models data/db
 EXPOSE 8000
 
 # Comando de arranque del servidor Uvicorn
-CMD ["python", "src/api/main.py"]
+CMD ["python", "-m", "src.api.main"]
