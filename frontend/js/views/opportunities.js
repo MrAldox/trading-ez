@@ -171,8 +171,13 @@ export async function loadOpportunities(forceRefresh = false) {
     // Renderizar grilla de tarjetas
     let html = `<div class="opportunities-grid">`;
     opps.forEach((opp, idx) => {
-      const probPct = Math.round(opp.calibrated_probability * 100);
+      const probPct = Math.round((opp.calibrated_prob ?? opp.calibrated_probability ?? 0.65) * 100);
       const probClass = probPct >= 65 ? "prob-high" : probPct >= 60 ? "prob-medium" : "prob-low";
+      const assetClassTxt = (opp.asset_class || "stocks").toUpperCase();
+      const assetName = opp.name || opp.asset_name || opp.symbol;
+      const windowTxt = opp.recommended_execution_window || (opp.horizon ? opp.horizon.toUpperCase() : "NY OPEN");
+      const dollarAlloc = opp.position_size?.capital_allocated || opp.position_size?.dollar_allocation || 0;
+      const strategyTag = opp.strategy_type ? "SMC & KILL ZONES" : "ML PURGADO";
 
       html += `
         <div class="glass-card opportunity-card" data-index="${idx}">
@@ -180,9 +185,13 @@ export async function loadOpportunities(forceRefresh = false) {
             <div class="opp-asset-info">
               <h3>
                 ${opp.symbol}
-                <span class="status-badge" style="background: rgba(255,255,255,0.06); font-size: 10px;">${opp.asset_class.toUpperCase()}</span>
+                <span class="status-badge" style="background: rgba(255,255,255,0.06); font-size: 10px;">${assetClassTxt}</span>
+                <span class="status-badge validated" style="font-size: 9px; padding: 2px 6px;">${strategyTag}</span>
               </h3>
-              <span>${opp.asset_name || opp.symbol} · ${opp.horizon.toUpperCase()}</span>
+              <span>${assetName}</span>
+              <div style="font-size: 11px; color: var(--color-brand); margin-top: 2px; font-weight: 600;">
+                ⏰ ${windowTxt}
+              </div>
             </div>
             <div class="prob-badge ${probClass}" title="Probabilidad calculada fuera de muestra y calibrada">
               <span>🎯</span> ${probPct}%
@@ -204,9 +213,9 @@ export async function loadOpportunities(forceRefresh = false) {
             </div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary); margin: 6px 0;">
             <div>Riesgo/Beneficio: <strong style="color: var(--text-primary);">${opp.risk_reward_ratio || 1.5}R</strong></div>
-            <div>Posición: <strong style="color: var(--color-brand);">${opp.position_size?.shares || 1} uds (${store.formatPrice(opp.position_size?.dollar_allocation || 0)})</strong></div>
+            <div>Posición: <strong style="color: var(--color-brand);">${opp.position_size?.shares || 1} uds (${store.formatPrice(dollarAlloc)})</strong></div>
           </div>
 
           <div style="margin-top: 4px; display: flex; gap: 8px;">

@@ -31,6 +31,9 @@
     </div>
 
     <div class="header-controls">
+      <div id="header-kill-zone-pill" class="status-badge validated" style="cursor: pointer;" title="Ventana de Inyección Institucional">
+        <span class="indicator-dot"></span> <span id="header-kill-zone-text">NY Open</span>
+      </div>
       <button id="btn-open-glossary" class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;">
         📖 Glosario Cuant
       </button>
@@ -54,9 +57,10 @@
     </div>
   </div>
 
-  <!-- Barra de Navegación de las 11 Pestañas Institucionales -->
+  <!-- Barra de Navegación de las 12 Pestañas Institucionales -->
   <nav class="tabs-navigation">
     <button class="nav-tab-btn active" data-tab="opportunities">🎯 Oportunidades</button>
+    <button class="nav-tab-btn" data-tab="advisor">🤖 Asesor Financiero IA</button>
     <button class="nav-tab-btn" data-tab="market">📡 Mercado en Vivo</button>
     <button class="nav-tab-btn" data-tab="heatmap">🗺️ Mapa de Calor</button>
     <button class="nav-tab-btn" data-tab="paper">💼 Paper Trading</button>
@@ -125,6 +129,7 @@
         </div>
       </div>
     </section>
+    <section id="view-advisor" class="tab-view"></section>
     <section id="view-market" class="tab-view"></section>
     <section id="view-heatmap" class="tab-view"></section>
     <section id="view-paper" class="tab-view"></section>

@@ -29,6 +29,7 @@ from src.api.routers.news import router as news_router
 from src.api.routers.calendar import router as calendar_router
 from src.api.routers.journal import router as journal_router
 from src.api.routers.alerts import router as alerts_router
+from src.api.routers.advisor import router as advisor_router
 from src.scheduler.jobs import scheduler
 
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -68,6 +69,7 @@ app.include_router(news_router)
 app.include_router(calendar_router)
 app.include_router(journal_router)
 app.include_router(alerts_router)
+app.include_router(advisor_router)
 
 @app.get("/api/health")
 def healthcheck():

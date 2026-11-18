@@ -1,9 +1,7 @@
-/**
- * Trading EZ - Orquestador Principal del Frontend (SPA)
- */
 import { store } from "./store.js";
 import { api } from "./api.js";
 import { initOpportunitiesView, loadOpportunities } from "./views/opportunities.js";
+import { initAdvisorView } from "./views/advisor.js";
 import { initMarketView, updateTickerTape } from "./views/market.js";
 import { initHeatmapView } from "./views/heatmap.js";
 import { initPaperView, loadPaperPortfolio } from "./views/paper.js";
@@ -62,6 +60,9 @@ async function bootApp() {
         switch (tabId) {
           case "opportunities":
             initOpportunitiesView();
+            break;
+          case "advisor":
+            initAdvisorView();
             break;
           case "market":
             initMarketView();
@@ -138,10 +139,32 @@ async function bootApp() {
   switchTab("opportunities");
   updateTickerTape();
 
-  // Actualización periódica de cotizaciones (cada 30 segundos)
+  // 8. Monitor de Horarios Bancarios (Kill Zones) en Header
+  const killZonePill = document.getElementById("header-kill-zone-pill");
+  if (killZonePill) {
+    killZonePill.addEventListener("click", () => switchTab("advisor"));
+  }
+  updateHeaderKillZone();
   setInterval(() => {
-    updateTickerTape();
-  }, 30000);
+    updateHeaderKillZone();
+  }, 45000);
+}
+
+async function updateHeaderKillZone() {
+  const pill = document.getElementById("header-kill-zone-pill");
+  const text = document.getElementById("header-kill-zone-text");
+  if (!pill || !text) return;
+  try {
+    const data = await api.getKillZones();
+    if (data && data.status_indicator) {
+      pill.style.display = "inline-flex";
+      pill.className = `status-badge ${data.indicator_color === "profit" ? "validated" : "uncalibrated"}`;
+      text.textContent = data.status_indicator.replace("VENTANA ACTIVA: ", "").substring(0, 24);
+      pill.title = data.tactical_advice;
+    }
+  } catch (err) {
+    console.warn("Kill zone update warning:", err);
+  }
 }
 
 if (document.readyState === "loading") {

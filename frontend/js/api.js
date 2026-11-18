@@ -135,4 +135,13 @@ export const api = {
     request(`/alerts/${alertId}`, {
       method: "DELETE",
     }),
+
+  // Asesor Financiero IA y Horarios Bancarios
+  getKillZones: () => request("/advisor/kill-zones"),
+  getAdvisorBriefing: () => request("/advisor/daily-briefing"),
+  askAdvisor: (message, history = []) =>
+    request("/advisor/chat", {
+      method: "POST",
+      body: JSON.stringify({ message, history }),
+    }),
 };
