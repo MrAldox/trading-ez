@@ -89,24 +89,46 @@ class PaperTradingManager:
                 db.add(port)
                 db.commit()
 
-            quote = data_manager.fetch_quote(symbol)
-            fill_price = float(quote.get("price", 100.0))
-            cost = fill_price * shares
+            # Obtención de precio de ejecución con fallback seguro
+            fill_price = 0.0
+            try:
+                quote = data_manager.fetch_quote(symbol)
+                fill_price = float(quote.get("price", 0.0))
+            except Exception:
+                fill_price = 0.0
+
+            if fill_price <= 0.0:
+                cached = data_manager.cache_manager.get_daily(symbol)
+                if cached and not cached[0].empty:
+                    fill_price = round(float(cached[0]["close"].iloc[-1]), 2)
+                else:
+                    fill_price = 100.0
+
+            # Garantizar al menos 1 unidad y ajustar si supera el saldo disponible
+            order_shares = max(1, int(shares))
+            cost = fill_price * order_shares
 
             if cost > port.current_cash:
-                raise ValueError(f"Efectivo insuficiente (${port.current_cash:.2f}) para comprar {shares} {symbol} a ${fill_price:.2f}")
+                max_affordable = int(port.current_cash // fill_price)
+                if max_affordable >= 1:
+                    order_shares = max_affordable
+                    cost = fill_price * order_shares
+                else:
+                    raise ValueError(
+                        f"Efectivo insuficiente (${port.current_cash:,.2f} USD) para comprar {order_shares} {symbol} a ${fill_price:,.2f} USD."
+                    )
 
             port.current_cash -= cost
             pos = PaperPositionModel(
                 id=f"pos_{uuid.uuid4().hex[:10]}",
                 symbol=symbol.upper(),
                 direction=direction.upper(),
-                shares=shares,
-                entry_price=fill_price,
-                current_price=fill_price,
-                stop_loss=stop_loss,
-                take_profit_1=take_profit_1,
-                take_profit_2=take_profit_2,
+                shares=order_shares,
+                entry_price=round(fill_price, 2),
+                current_price=round(fill_price, 2),
+                stop_loss=round(stop_loss, 2),
+                take_profit_1=round(take_profit_1, 2),
+                take_profit_2=round(take_profit_2, 2),
                 unrealized_pnl=0.0,
                 status="OPEN",
             )
@@ -115,17 +137,17 @@ class PaperTradingManager:
 
             res_dict = {
                 "position_id": pos.id,
-                "symbol": symbol,
-                "shares": shares,
-                "fill_price": fill_price,
+                "symbol": symbol.upper(),
+                "shares": order_shares,
+                "fill_price": round(fill_price, 2),
                 "remaining_cash": round(port.current_cash, 2),
-                "message": f"Orden de paper trading ejecutada: {shares} {symbol} @ ${fill_price:.2f}",
+                "message": f"Orden de paper trading ejecutada: {order_shares} {symbol.upper()} @ ${fill_price:.2f}",
             }
             res_dict["position"] = {
                 "id": pos.id,
-                "symbol": symbol,
-                "shares": shares,
-                "fill_price": fill_price,
+                "symbol": symbol.upper(),
+                "shares": order_shares,
+                "fill_price": round(fill_price, 2),
             }
             return res_dict
         finally:

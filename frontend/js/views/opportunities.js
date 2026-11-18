@@ -218,12 +218,15 @@ export async function loadOpportunities(forceRefresh = false) {
             <div>Posición: <strong style="color: var(--color-brand);">${opp.position_size?.shares || 1} uds (${store.formatPrice(dollarAlloc)})</strong></div>
           </div>
 
-          <div style="margin-top: 4px; display: flex; gap: 8px;">
-            <button class="btn btn-primary btn-view-ticket" data-index="${idx}" style="flex: 1;">
-              📋 Ver Ficha & Gráfico
+          <div style="margin-top: 8px; display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 8px;">
+            <button class="btn btn-primary btn-quick-paper" data-index="${idx}" title="Abrir y ejecutar esta operación directamente en Paper Trading">
+              <i class="fa-solid fa-wallet"></i> Operar en Paper
             </button>
-            <button class="btn btn-copy btn-quick-copy" data-index="${idx}" title="Copiar texto de la orden">
-              📄 Copiar
+            <button class="btn btn-secondary btn-view-ticket" data-index="${idx}" title="Ver ficha técnica completa y gráfico">
+              <i class="fa-solid fa-chart-line"></i> Ficha &amp; Gráfico
+            </button>
+            <button class="btn btn-secondary btn-quick-copy" data-index="${idx}" title="Copiar texto de la orden">
+              <i class="fa-regular fa-copy"></i>
             </button>
           </div>
         </div>
@@ -231,6 +234,15 @@ export async function loadOpportunities(forceRefresh = false) {
     });
     html += `</div>`;
     container.innerHTML = html;
+
+    // Vincular botón directo Operar en Paper
+    container.querySelectorAll(".btn-quick-paper").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute("data-index"), 10);
+        executeOpportunityInPaper(opps[idx], btn);
+      });
+    });
 
     // Vincular clicks en las tarjetas
     container.querySelectorAll(".btn-view-ticket").forEach((btn) => {
@@ -358,6 +370,15 @@ Invalidación: ${invalidationTxt}`;
     `;
   }
 
+  // Vincular botón Operar Directo en Paper Trading dentro del modal
+  const btnModalPaper = document.getElementById("btn-modal-execute-paper") || document.getElementById("btn-modal-paper-trade");
+  if (btnModalPaper) {
+    btnModalPaper.onclick = (e) => {
+      e.preventDefault();
+      executeOpportunityInPaper(ticket, btnModalPaper);
+    };
+  }
+
   // Abrir modal inmediatamente
   modal.classList.add("open");
 
@@ -384,6 +405,56 @@ Invalidación: ${invalidationTxt}`;
       console.warn("No se pudo cargar el gráfico en el modal:", e);
     }
   }, 100);
+}
+
+export async function executeOpportunityInPaper(ticket, btn = null) {
+  if (!ticket) return;
+
+  const originalContent = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Ejecutando...`;
+  }
+
+  try {
+    const pos = ticket.position_size || {};
+    const shares = Math.max(1, pos.shares || ticket.suggested_shares || 1);
+    const stopLoss = ticket.stop_loss || 0.0;
+    const tp1 = ticket.take_profit_1 || 0.0;
+    const tp2 = ticket.take_profit_2 || 0.0;
+
+    const res = await api.executePaperOrder({
+      symbol: ticket.symbol,
+      direction: ticket.direction || "LONG",
+      shares: shares,
+      stop_loss: stopLoss,
+      take_profit_1: tp1,
+      take_profit_2: tp2,
+    });
+
+    store.showToast(
+      res.message || `Orden ejecutada: ${shares} ${ticket.symbol} en Paper Trading`,
+      "success"
+    );
+
+    // Cerrar modal de ficha si estaba abierto
+    const modal = document.getElementById("ticket-modal");
+    if (modal) modal.classList.remove("open");
+
+    // Cambiar a la pestaña de Paper Trading
+    const paperBtn = document.querySelector('[data-tab="paper"]');
+    if (paperBtn) {
+      paperBtn.click();
+    }
+  } catch (err) {
+    console.error("Error al ejecutar orden en paper:", err);
+    store.showToast(`Error al ejecutar en Paper Trading: ${err.message}`, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
 }
 
 export function copyTicketText(ticket) {

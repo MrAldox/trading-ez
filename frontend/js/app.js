@@ -393,7 +393,7 @@ function setupTicketModalActions() {
   }
 
   // Botón Ejecutar en Paper Trading desde Ficha
-  const btnModalPaper = document.getElementById("btn-modal-paper-trade");
+  const btnModalPaper = document.getElementById("btn-modal-execute-paper") || document.getElementById("btn-modal-paper-trade");
   if (btnModalPaper) {
     btnModalPaper.addEventListener("click", async () => {
       const ticket = store.getState().selectedOpportunity;
@@ -401,19 +401,20 @@ function setupTicketModalActions() {
 
       try {
         btnModalPaper.disabled = true;
-        btnModalPaper.textContent = "Ejecutando...";
+        btnModalPaper.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Ejecutando...`;
 
-        const shares = ticket.sizing?.suggested_shares || 1;
+        const pos = ticket.position_size || {};
+        const shares = Math.max(1, pos.shares || ticket.suggested_shares || 1);
         const res = await api.executePaperOrder({
           symbol: ticket.symbol,
-          direction: ticket.direction,
+          direction: ticket.direction || "LONG",
           shares: shares,
-          stop_loss: ticket.stop_loss,
-          take_profit_1: ticket.take_profit_1,
-          take_profit_2: ticket.take_profit_2,
+          stop_loss: ticket.stop_loss || 0.0,
+          take_profit_1: ticket.take_profit_1 || 0.0,
+          take_profit_2: ticket.take_profit_2 || 0.0,
         });
 
-        store.showToast(`Orden ejecutada: ${shares} ${ticket.symbol} en Paper Trading`, "success");
+        store.showToast(res.message || `Orden ejecutada: ${shares} ${ticket.symbol} en Paper Trading`, "success");
         document.getElementById("ticket-modal").classList.remove("open");
 
         // Cambiar a la vista de paper trading
@@ -423,14 +424,14 @@ function setupTicketModalActions() {
         store.showToast(`Error al ejecutar orden: ${err.message}`, "error");
       } finally {
         btnModalPaper.disabled = false;
-        btnModalPaper.textContent = "💼 Ejecutar en Paper Trading";
+        btnModalPaper.innerHTML = `💼 Operar Directo en Paper Trading`;
       }
     });
   }
 }
 
 function setupOrderModalActions() {
-  const form = document.getElementById("order-form");
+  const form = document.getElementById("manual-order-form") || document.getElementById("order-form");
   if (!form) return;
 
   form.addEventListener("submit", async (e) => {
