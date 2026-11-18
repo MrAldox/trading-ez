@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  trading-ez:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading_ez_terminal
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Trading EZ
+      - APP_ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - DATABASE_URL=sqlite:////app/data/db/trading_ez.db
+      - LOG_LEVEL=INFO
+    volumes:
+      # Persistencia de datos en disco: caché Parquet, modelos y base de datos SQLite WAL
+      - ./data:/app/data
+      - ./config:/app/config

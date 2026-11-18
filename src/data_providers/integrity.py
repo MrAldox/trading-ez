@@ -83,10 +83,10 @@ class DataIntegrityAuditor:
 
         # 2. Manejo de índice temporal
         if "timestamp" in clean_df.columns and not isinstance(clean_df.index, pd.DatetimeIndex):
-            clean_df["timestamp"] = pd.to_datetime(clean_df["timestamp"], utc=True)
+            clean_df["timestamp"] = pd.to_datetime(clean_df["timestamp"], utc=True).normalize()
             clean_df = clean_df.set_index("timestamp")
         elif isinstance(clean_df.index, pd.DatetimeIndex):
-            clean_df.index = pd.to_datetime(clean_df.index, utc=True)
+            clean_df.index = pd.to_datetime(clean_df.index, utc=True).normalize()
 
         initial_len = len(clean_df)
 

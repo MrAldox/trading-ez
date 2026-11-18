@@ -26,11 +26,17 @@ def add_market_context_features(
         res["relative_strength_momentum"] = 0.0
         return res
 
-    bench_close = benchmark_df["close"].reindex(res.index).ffill()
+    res_norm_idx = res.index.normalize()
+    bench_copy = benchmark_df["close"].copy()
+    bench_copy.index = bench_copy.index.normalize()
+    bench_close = bench_copy.reindex(res_norm_idx).ffill().bfill()
+    bench_close.index = res.index
     bench_ema50 = calculate_ema(bench_close, 50)
+    bench_ema200 = calculate_ema(bench_close, 200)
 
-    # 1. Régimen del mercado amplio (¿Está el índice sobre su EMA 50?)
+    # 1. Régimen del mercado amplio (¿Está el índice sobre su EMA 50 y EMA 200?)
     res["benchmark_above_ema50"] = (bench_close > bench_ema50).astype(float)
+    res["benchmark_above_ema200"] = (bench_close > bench_ema200).astype(float)
 
     # 2. Ratio de Fuerza Relativa (RS = Activo / Benchmark)
     rs_ratio = res["close"] / bench_close.replace(0, np.nan)

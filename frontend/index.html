@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Trading EZ · Market Terminal Pro</title>
+  
+  <!-- Estilos del Sistema de Diseño Bloomberg / Koyfin -->
+  <link rel="stylesheet" href="/static/css/variables.css" />
+  <link rel="stylesheet" href="/static/css/base.css" />
+  <link rel="stylesheet" href="/static/css/components.css" />
+  <link rel="stylesheet" href="/static/css/charts.css" />
+</head>
+<body>
+
+  <!-- Aviso Legal Permanente y Obligatorio -->
+  <div class="disclaimer-banner">
+    <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+    <span>Herramienta cuantitativa de apoyo a la decisión, no es asesoría financiera. El trading conlleva riesgo de pérdida de capital.</span>
+  </div>
+
+  <!-- Encabezado Principal del Terminal -->
+  <header class="terminal-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        TRADING <span>EZ</span>
+      </div>
+      <div id="global-system-status" class="status-badge uncalibrated">
+        <span class="indicator-dot"></span> SIN CALIBRAR
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <button id="btn-open-glossary" class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;">
+        📖 Glosario Cuant
+      </button>
+      <button id="theme-toggle-btn" class="btn btn-secondary" style="padding: 6px 10px;" title="Cambiar Tema">
+        ☀️
+      </button>
+    </div>
+  </header>
+
+  <!-- Cinta de Tickers (Ticker Tape en Vivo) -->
+  <div class="ticker-tape-container">
+    <div id="header-ticker-tape" class="ticker-tape">
+      <div class="tape-item"><span class="tape-sym">SPY</span><span class="tape-price">...</span></div>
+      <div class="tape-item"><span class="tape-sym">QQQ</span><span class="tape-price">...</span></div>
+      <div class="tape-item"><span class="tape-sym">BTC-USD</span><span class="tape-price">...</span></div>
+    </div>
+  </div>
+
+  <!-- Barra de Navegación de las 11 Pestañas Institucionales -->
+  <nav class="tabs-navigation">
+    <button class="nav-tab-btn active" data-tab="opportunities">🎯 Oportunidades</button>
+    <button class="nav-tab-btn" data-tab="market">📡 Mercado en Vivo</button>
+    <button class="nav-tab-btn" data-tab="heatmap">🗺️ Mapa de Calor</button>
+    <button class="nav-tab-btn" data-tab="paper">💼 Paper Trading</button>
+    <button class="nav-tab-btn" data-tab="backtest">📈 Backtest Riguroso</button>
+    <button class="nav-tab-btn" data-tab="screener">🔍 Escáner</button>
+    <button class="nav-tab-btn" data-tab="news">📰 Noticias</button>
+    <button class="nav-tab-btn" data-tab="calendar">📅 Calendario</button>
+    <button class="nav-tab-btn" data-tab="journal">📓 Diario</button>
+    <button class="nav-tab-btn" data-tab="alerts">🔔 Alertas</button>
+    <button class="nav-tab-btn" data-tab="model-status">🔬 Estado del Modelo</button>
+  </nav>
+
+  <!-- Contenedor Principal de Vistas -->
+  <main class="terminal-main-content">
+    <section id="view-opportunities" class="tab-view active"></section>
+    <section id="view-market" class="tab-view"></section>
+    <section id="view-heatmap" class="tab-view"></section>
+    <section id="view-paper" class="tab-view"></section>
+    <section id="view-backtest" class="tab-view"></section>
+    <section id="view-screener" class="tab-view"></section>
+    <section id="view-news" class="tab-view"></section>
+    <section id="view-calendar" class="tab-view"></section>
+    <section id="view-journal" class="tab-view"></section>
+    <section id="view-alerts" class="tab-view"></section>
+    <section id="view-model-status" class="tab-view"></section>
+  </main>
+
+  <!-- MODAL: FICHA DE OPERACIÓN DETALLADA (OPPORTUNITY TICKET) -->
+  <div id="ticket-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-ticket-title" style="font-size: 18px; font-weight: 800;">Activo · Ficha de Operación</h2>
+          <span id="modal-ticket-badge" class="status-badge validated" style="margin-top: 4px; display: inline-block;">LONG (Calibrada)</span>
+        </div>
+        <button class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Gráfico Canvas con Niveles Técnicos -->
+        <div class="chart-container" style="height: 340px;">
+          <canvas id="modal-chart-canvas" class="chart-canvas"></canvas>
+          <div class="chart-overlay-controls">
+            <span class="chart-tag" style="color: var(--color-brand);">Entrada Apertura</span>
+            <span class="chart-tag" style="color: var(--color-loss);">Stop Loss</span>
+            <span class="chart-tag" style="color: var(--color-profit);">Take Profit 1</span>
+          </div>
+        </div>
+
+        <!-- Niveles Clave y Gestión de Riesgo -->
+        <div class="opp-levels-grid">
+          <div class="opp-level-item">
+            <label>Entrada (Open t+1)</label>
+            <span id="modal-entry-price" class="level-entry">-</span>
+          </div>
+          <div class="opp-level-item">
+            <label>Stop Loss (1R)</label>
+            <span id="modal-stop-loss" class="level-stop">-</span>
+          </div>
+          <div class="opp-level-item">
+            <label>Take Profit 1 (1.5R)</label>
+            <span id="modal-tp1" class="level-tp">-</span>
+          </div>
+          <div class="opp-level-item">
+            <label>Take Profit 2 (3.0R)</label>
+            <span id="modal-tp2" class="level-tp">-</span>
+          </div>
+          <div class="opp-level-item">
+            <label>Unidades Sugeridas</label>
+            <span id="modal-position-shares" style="color: var(--text-primary);">-</span>
+          </div>
+          <div class="opp-level-item">
+            <label>Riesgo Monetario</label>
+            <span id="modal-position-risk" style="color: var(--color-loss);">-</span>
+          </div>
+        </div>
+
+        <!-- Sub-pestañas internas del Modal -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+          <button class="btn btn-secondary modal-tab-btn active" data-modal-tab="analysis">Tesis &amp; Riesgos</button>
+          <button class="btn btn-secondary modal-tab-btn" data-modal-tab="copy">Copiar Orden</button>
+          <button class="btn btn-secondary modal-tab-btn" data-modal-tab="ai">Análisis con IA</button>
+        </div>
+
+        <!-- Contenido Sub-pestaña 1: Tesis y Riesgos -->
+        <div id="modal-content-analysis" class="modal-tab-content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <h4 style="font-size: 13px; font-weight: 700; color: var(--color-profit); margin-bottom: 6px;">Motivos Técnicos</h4>
+              <ul id="modal-reasons-list" style="padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary);"></ul>
+            </div>
+            <div>
+              <h4 style="font-size: 13px; font-weight: 700; color: var(--color-loss); margin-bottom: 6px;">Contradicciones &amp; Riesgos</h4>
+              <ul id="modal-contradictions-list" style="padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary);"></ul>
+              <ul id="modal-warnings-list" style="padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--color-warning); margin-top: 6px;"></ul>
+            </div>
+          </div>
+          <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius-md);">
+            <strong style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Condición de Invalidación:</strong>
+            <p id="modal-invalidation-text" style="font-size: 13px; color: var(--text-primary); margin-top: 2px;"></p>
+          </div>
+        </div>
+
+        <!-- Contenido Sub-pestaña 2: Copiar Orden -->
+        <div id="modal-content-copy" class="modal-tab-content" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-size: 12px; color: var(--text-secondary);">Texto Listo para Copiar / Broker:</label>
+                <button id="btn-modal-copy-text" class="btn btn-copy" style="padding: 3px 8px; font-size: 11px;">📋 Copiar Texto</button>
+              </div>
+              <textarea id="modal-copy-text" rows="5" readonly style="font-family: var(--font-mono); font-size: 12px;"></textarea>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-size: 12px; color: var(--text-secondary);">Bracket Order (JSON API):</label>
+                <button id="btn-modal-copy-json" class="btn btn-copy" style="padding: 3px 8px; font-size: 11px;">📋 Copiar JSON</button>
+              </div>
+              <textarea id="modal-copy-json" rows="4" readonly style="font-family: var(--font-mono); font-size: 12px;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenido Sub-pestaña 3: Explicación IA -->
+        <div id="modal-content-ai" class="modal-tab-content" style="display: none;">
+          <div class="ai-explainer-card">
+            <div class="ai-explainer-header">
+              <span class="ai-badge">🤖 Gemini LLM Validado</span>
+              <button id="btn-generate-ai-explanation" class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;">
+                Generar Análisis IA
+              </button>
+            </div>
+            <div id="modal-ai-explanation-content">
+              <p>Haz clic en "Generar Análisis IA" para obtener una explicación cuantitativa estructurada sin alucinaciones de precios.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones en el Pie del Modal -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+          <button id="btn-modal-execute-paper" class="btn btn-primary">
+            💼 Operar Directo en Paper Trading
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ORDEN MANUAL DE PAPER TRADING -->
+  <div id="order-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 style="font-size: 16px; font-weight: 700;">Nueva Orden (Paper Trading)</h3>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="manual-order-form" style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Activo:</label>
+            <input type="text" id="order-symbol" placeholder="ej. NVDA, BTC-USD" required />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Dirección:</label>
+              <select id="order-direction">
+                <option value="LONG">LONG (Compra)</option>
+                <option value="SHORT">SHORT (Venta)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Unidades:</label>
+              <input type="number" id="order-shares" value="10" min="1" required />
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Stop Loss ($):</label>
+            <input type="number" id="order-sl" placeholder="0.00" step="0.01" />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Take Profit 1 ($):</label>
+              <input type="number" id="order-tp1" placeholder="0.00" step="0.01" />
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Take Profit 2 ($):</label>
+              <input type="number" id="order-tp2" placeholder="0.00" step="0.01" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+            Ejecutar Orden en Simulación
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GLOSARIO CUANTITATIVO INSTITUCIONAL -->
+  <div id="glossary-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3 style="font-size: 16px; font-weight: 700;">📖 Glosario Cuantitativo y de Integridad</h3>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size: 13px; line-height: 1.6; display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <strong style="color: var(--color-brand); font-size: 14px;">Expectancy en R (Expectativa Matemática):</strong>
+          <p style="color: var(--text-secondary);">El rendimiento promedio en múltiplos del riesgo inicial (1R = distancia de entrada a Stop Loss). Una expectativa de +0.30R significa que en promedio cada operación aporta un 30% del riesgo arriesgado, después de descontar comisiones y spread.</p>
+        </div>
+        <div>
+          <strong style="color: var(--color-brand); font-size: 14px;">Método de la Triple Barrera (Triple Barrier):</strong>
+          <p style="color: var(--text-secondary);">Formulación de Marcos López de Prado para etiquetar operaciones financieras: Barrera superior (Take Profit), barrera inferior (Stop Loss) y barrera temporal (expiración en N velas). Se asume estrictamente salida por Stop Loss si ambas barreras se tocan en la misma barra.</p>
+        </div>
+        <div>
+          <strong style="color: var(--color-brand); font-size: 14px;">Calibración de Probabilidades Fuera de Muestra:</strong>
+          <p style="color: var(--text-secondary);">Transformación no paramétrica (Isotónica o Platt) aplicada sobre predicciones nunca vistas en entrenamiento. Garantiza que cuando el sistema emite una probabilidad del 65%, en la realidad histórica aproximadamente 65 de cada 100 operaciones hayan ganado.</p>
+        </div>
+        <div>
+          <strong style="color: var(--color-brand); font-size: 14px;">Brier Score:</strong>
+          <p style="color: var(--text-secondary);">Métrica cuadrática estricta de calibración. Un valor de 0.25 equivale a un modelo aleatorio sin ventaja predictiva. Valores inferiores a 0.24 demuestran discriminación y calibración real.</p>
+        </div>
+        <div>
+          <strong style="color: var(--color-brand); font-size: 14px;">Sesgo Prospectivo (Lookahead Bias):</strong>
+          <p style="color: var(--text-secondary);">Contaminación de datos donde un cálculo utiliza información del futuro. En Trading EZ, cada indicador y cada decisión al cierre de la barra t solo utiliza datos previos a t, ejecutándose en la apertura de t+1.</p>
+        </div>
+        <div>
+          <strong style="color: var(--color-brand); font-size: 14px;">Circuit Breaker (Disyuntor):</strong>
+          <p style="color: var(--text-secondary);">Salvaguarda institucional que bloquea automáticamente la emisión de nuevas señales si los datos tienen más de 24h de antigüedad o si el sistema acumula 4 o más pérdidas consecutivas.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Flotante de Notificaciones Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Script Principal Vanilla ES6+ -->
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

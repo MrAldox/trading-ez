@@ -1,0 +1,365 @@
+/**
+ * Trading EZ - Vista de Oportunidades y Ficha de Operación
+ */
+import { api } from "../api.js";
+import { store } from "../store.js";
+import { FinancialCanvasChart } from "../chart/engine.js";
+
+let modalChart = null;
+
+export async function initOpportunitiesView() {
+  const container = document.getElementById("view-opportunities");
+  if (!container) return;
+
+  container.innerHTML = `
+    <!-- Barra Superior de Parámetros y Filtros Cuantitativos -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Clase:</label>
+        <select id="opp-filter-class" style="width: auto;">
+          <option value="all">Todos los Activos</option>
+          <option value="stocks">Acciones (S&P 500 / Nasdaq)</option>
+          <option value="crypto">Cripto 24/7</option>
+          <option value="etf">ETFs Líquidos</option>
+          <option value="commodities">Materias Primas / FX</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Horizonte:</label>
+        <select id="opp-filter-horizon" style="width: auto;">
+          <option value="medium" selected>Medio (10-20 velas)</option>
+          <option value="short">Corto (3-5 velas)</option>
+          <option value="long">Largo (30-60 velas)</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Capital USD:</label>
+        <input type="number" id="opp-capital" value="10000" min="1000" step="1000" style="width: 110px;" />
+      </div>
+
+      <div class="filter-group">
+        <label>Riesgo/Trade:</label>
+        <select id="opp-risk" style="width: auto;">
+          <option value="0.5">0.5% (Conservador)</option>
+          <option value="1.0" selected>1.0% (Equilibrado)</option>
+          <option value="2.0">2.0% (Agresivo)</option>
+        </select>
+      </div>
+
+      <button id="btn-refresh-opps" class="btn btn-primary" style="margin-left: auto;">
+        <span>🔄</span> Escanear Mercado
+      </button>
+    </div>
+
+    <!-- Banner de Auditoría e Historial del Modelo -->
+    <div id="opp-history-banner" class="glass-card" style="margin-bottom: 16px; display: none;"></div>
+
+    <!-- Contenedor Principal de Tarjetas -->
+    <div id="opp-cards-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <div class="empty-state-title">Cargando oportunidades del mercado...</div>
+      </div>
+    </div>
+  `;
+
+  // Listeners de controles
+  document.getElementById("btn-refresh-opps").addEventListener("click", () => loadOpportunities(true));
+  document.getElementById("opp-filter-class").addEventListener("change", () => loadOpportunities());
+  document.getElementById("opp-filter-horizon").addEventListener("change", () => loadOpportunities());
+  document.getElementById("opp-capital").addEventListener("change", () => loadOpportunities());
+  document.getElementById("opp-risk").addEventListener("change", () => loadOpportunities());
+
+  await loadOpportunities();
+}
+
+export async function loadOpportunities(forceRefresh = false) {
+  const container = document.getElementById("opp-cards-container");
+  const banner = document.getElementById("opp-history-banner");
+  if (!container) return;
+
+  const assetClass = document.getElementById("opp-filter-class")?.value || "all";
+  const horizon = document.getElementById("opp-filter-horizon")?.value || "medium";
+  const capital = parseFloat(document.getElementById("opp-capital")?.value || "10000");
+  const riskPct = parseFloat(document.getElementById("opp-risk")?.value || "1.0");
+
+  try {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <div class="empty-state-title">Analizando universo con modelos calibrados...</div>
+        <div class="empty-state-desc">Filtrando liquidez, regímenes y expectativas netas de comisiones.</div>
+      </div>
+    `;
+
+    const data = await api.getOpportunities({
+      asset_class: assetClass,
+      horizon: horizon,
+      capital: capital,
+      risk_pct: riskPct,
+      force_refresh: forceRefresh,
+    });
+
+    // Actualizar badge de estado en el header
+    const statusBadge = document.getElementById("global-system-status");
+    if (statusBadge) {
+      statusBadge.className = `status-badge ${data.status.toLowerCase().replace(/\s+/g, "_")}`;
+      statusBadge.innerHTML = `<span class="indicator-dot"></span> ${data.status}`;
+    }
+
+    // Banner de métricas históricas de honestidad
+    if (data.system_metrics && banner) {
+      banner.style.display = "block";
+      const m = data.system_metrics;
+      banner.innerHTML = `
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Transparencia Cuantitativa</span>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+              Historial real del ranking: <strong>${m.total_closed_signals || 0}</strong> señales ejecutadas | 
+              Win Rate: <strong style="color: var(--color-profit);">${store.formatPercent(m.realized_win_rate_pct || 0, false)}</strong> | 
+              Expectancy Media: <strong style="color: var(--color-profit);">${store.formatR(m.realized_avg_r || 0)}</strong> | 
+              Max DD: <strong style="color: var(--color-loss);">${store.formatPercent(m.max_drawdown_pct || 0)}</strong>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted);">
+            Regla de oro: <em>Menos fallos = Selectividad Extrema</em>
+          </div>
+        </div>
+      `;
+    }
+
+    const opps = data.opportunities || [];
+    store.setState({ opportunities: opps, systemStatus: data.status });
+
+    if (data.status === "BLOQUEADO") {
+      container.innerHTML = `
+        <div class="empty-state" style="border-color: var(--color-loss); background: rgba(239, 68, 68, 0.05);">
+          <div class="empty-state-icon">🛑</div>
+          <div class="empty-state-title" style="color: var(--color-loss);">SISTEMA BLOQUEADO POR CIRCUIT BREAKER</div>
+          <div class="empty-state-desc">
+            ${data.message || "Se ha activado una salvaguarda institucional de riesgo por datos obsoletos o racha de pérdidas consecutivas."}
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (opps.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🛡️</div>
+          <div class="empty-state-title">Hoy no hay oportunidades con ventaja estadística suficiente</div>
+          <div class="empty-state-desc">
+            El sistema opera bajo selectividad extrema (probabilidad calibrada &ge; 60%, expectativa positiva neta de comisiones y R:B &ge; 1.5).
+            Preservar capital es la primera regla. No forzar operaciones es un resultado cuantitativamente válido y esperado en muchos días.
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Renderizar grilla de tarjetas
+    let html = `<div class="opportunities-grid">`;
+    opps.forEach((opp, idx) => {
+      const probPct = Math.round(opp.calibrated_probability * 100);
+      const probClass = probPct >= 65 ? "prob-high" : probPct >= 60 ? "prob-medium" : "prob-low";
+
+      html += `
+        <div class="glass-card opportunity-card" data-index="${idx}">
+          <div class="opp-card-header">
+            <div class="opp-asset-info">
+              <h3>
+                ${opp.symbol}
+                <span class="status-badge" style="background: rgba(255,255,255,0.06); font-size: 10px;">${opp.asset_class.toUpperCase()}</span>
+              </h3>
+              <span>${opp.asset_name || opp.symbol} · ${opp.horizon.toUpperCase()}</span>
+            </div>
+            <div class="prob-badge ${probClass}" title="Probabilidad calculada fuera de muestra y calibrada">
+              <span>🎯</span> ${probPct}%
+            </div>
+          </div>
+
+          <div class="opp-levels-grid">
+            <div class="opp-level-item">
+              <label>Entrada (t+1)</label>
+              <span class="level-entry">${store.formatPrice(opp.entry_price)}</span>
+            </div>
+            <div class="opp-level-item">
+              <label>Stop Loss</label>
+              <span class="level-stop">${store.formatPrice(opp.stop_loss)}</span>
+            </div>
+            <div class="opp-level-item">
+              <label>Take Profit 1</label>
+              <span class="level-tp">${store.formatPrice(opp.take_profit_1)}</span>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary);">
+            <div>Riesgo/Beneficio: <strong style="color: var(--text-primary);">${opp.risk_reward_ratio || 1.5}R</strong></div>
+            <div>Posición: <strong style="color: var(--color-brand);">${opp.position_size?.shares || 1} uds (${store.formatPrice(opp.position_size?.dollar_allocation || 0)})</strong></div>
+          </div>
+
+          <div style="margin-top: 4px; display: flex; gap: 8px;">
+            <button class="btn btn-primary btn-view-ticket" data-index="${idx}" style="flex: 1;">
+              📋 Ver Ficha & Gráfico
+            </button>
+            <button class="btn btn-copy btn-quick-copy" data-index="${idx}" title="Copiar texto de la orden">
+              📄 Copiar
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    container.innerHTML = html;
+
+    // Vincular clicks en las tarjetas
+    container.querySelectorAll(".btn-view-ticket").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute("data-index"), 10);
+        openTicketModal(opps[idx]);
+      });
+    });
+
+    container.querySelectorAll(".opportunity-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const idx = parseInt(card.getAttribute("data-index"), 10);
+        openTicketModal(opps[idx]);
+      });
+    });
+
+    container.querySelectorAll(".btn-quick-copy").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute("data-index"), 10);
+        copyTicketText(opps[idx]);
+      });
+    });
+
+  } catch (err) {
+    container.innerHTML = `
+      <div class="empty-state" style="border-color: var(--color-loss);">
+        <div class="empty-state-icon">⚠️</div>
+        <div class="empty-state-title">Error al consultar oportunidades</div>
+        <div class="empty-state-desc">${err.message}</div>
+      </div>
+    `;
+  }
+}
+
+export async function openTicketModal(ticket) {
+  const modal = document.getElementById("ticket-modal");
+  if (!modal) return;
+
+  store.setState({ selectedOpportunity: ticket });
+
+  // Título e identificadores
+  document.getElementById("modal-ticket-title").textContent = `${ticket.symbol} · ${ticket.asset_name || ""}`;
+  document.getElementById("modal-ticket-badge").textContent = `${ticket.direction} (${Math.round(ticket.calibrated_probability * 100)}% Prob. Calibrada)`;
+
+  // Resumen de niveles y tamaño
+  document.getElementById("modal-entry-price").textContent = store.formatPrice(ticket.entry_price);
+  document.getElementById("modal-stop-loss").textContent = `${store.formatPrice(ticket.stop_loss)} (-${ticket.risk_distance_pct || 0}%)`;
+  document.getElementById("modal-tp1").textContent = `${store.formatPrice(ticket.take_profit_1)} (+1.5R)`;
+  document.getElementById("modal-tp2").textContent = `${store.formatPrice(ticket.take_profit_2)} (+3.0R)`;
+
+  const pos = ticket.position_size || {};
+  document.getElementById("modal-position-shares").textContent = `${pos.shares || 1} uds`;
+  document.getElementById("modal-position-capital").textContent = store.formatPrice(pos.dollar_allocation || 0);
+  document.getElementById("modal-position-risk").textContent = store.formatPrice(pos.dollar_risk || 0);
+
+  // Listas de razones, contradicciones y advertencias
+  const reasonsEl = document.getElementById("modal-reasons-list");
+  reasonsEl.innerHTML = (ticket.reasons || []).map((r) => `<li>✅ ${r}</li>`).join("") || "<li>Estructura técnica y momentum favorables</li>";
+
+  const contraEl = document.getElementById("modal-contradictions-list");
+  contraEl.innerHTML = (ticket.contradictions || []).map((c) => `<li>⚠️ ${c}</li>`).join("") || "<li>Ninguna contradicción de peso detectada</li>";
+
+  const warnEl = document.getElementById("modal-warnings-list");
+  warnEl.innerHTML = (ticket.warnings || []).map((w) => `<li>🛑 ${w}</li>`).join("") || "<li>Volatilidad habitual de mercado</li>";
+
+  document.getElementById("modal-invalidation-text").textContent = ticket.invalidation_condition || "Cierre de vela por debajo del Stop Loss antes de alcanzar TP1.";
+
+  // Formatos de copia
+  const copyText = `--- ORDEN DE TRADING EZ ---
+Activo: ${ticket.symbol} (${ticket.asset_name || ""})
+Dirección: ${ticket.direction}
+Entrada Apertura: ${store.formatPrice(ticket.entry_price)}
+Stop Loss: ${store.formatPrice(ticket.stop_loss)}
+Take Profit 1: ${store.formatPrice(ticket.take_profit_1)}
+Take Profit 2: ${store.formatPrice(ticket.take_profit_2)}
+Tamaño sugerido: ${pos.shares || 1} unidades (~${store.formatPrice(pos.dollar_allocation || 0)})
+Riesgo monetario: ${store.formatPrice(pos.dollar_risk || 0)}
+Probabilidad Calibrada: ${Math.round(ticket.calibrated_probability * 100)}%
+Invalidación: ${ticket.invalidation_condition || "Cierre bajo Stop Loss"}`;
+
+  document.getElementById("modal-copy-text").value = copyText;
+
+  const bracketJson = {
+    symbol: ticket.symbol,
+    action: ticket.direction === "LONG" ? "BUY" : "SELL",
+    quantity: pos.shares || 1,
+    orderType: "STOP_LIMIT",
+    limitPrice: ticket.entry_price,
+    stopLoss: { price: ticket.stop_loss },
+    takeProfit: { price: ticket.take_profit_1 },
+  };
+  document.getElementById("modal-copy-json").value = JSON.stringify(bracketJson, null, 2);
+
+  // Explicación de IA inicial (reset)
+  const aiBox = document.getElementById("modal-ai-explanation-content");
+  aiBox.innerHTML = `
+    <p>Haz clic en el botón <strong>"Generar Análisis IA"</strong> para obtener una explicación detallada en lenguaje natural validada contra alucinaciones.</p>
+  `;
+
+  // Abrir modal
+  modal.classList.add("open");
+
+  // Inicializar o actualizar gráfico Canvas
+  setTimeout(async () => {
+    try {
+      const histData = await api.getMarketHistory(ticket.symbol, "1d", 120);
+      const canvas = document.getElementById("modal-chart-canvas");
+      if (canvas && histData.candles?.length) {
+        modalChart = new FinancialCanvasChart("modal-chart-canvas", {
+          showVolume: true,
+          showIndicators: true,
+          showTradeLevels: true,
+          tradeLevels: {
+            entry: ticket.entry_price,
+            stopLoss: ticket.stop_loss,
+            takeProfit1: ticket.take_profit_1,
+            takeProfit2: ticket.take_profit_2,
+          },
+        });
+        modalChart.setData(histData.candles);
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar el gráfico en el modal:", e);
+    }
+  }, 100);
+}
+
+export function copyTicketText(ticket) {
+  const pos = ticket.position_size || {};
+  const copyText = `--- ORDEN DE TRADING EZ ---
+Activo: ${ticket.symbol} (${ticket.asset_name || ""})
+Dirección: ${ticket.direction}
+Entrada Apertura: ${store.formatPrice(ticket.entry_price)}
+Stop Loss: ${store.formatPrice(ticket.stop_loss)}
+Take Profit 1: ${store.formatPrice(ticket.take_profit_1)}
+Take Profit 2: ${store.formatPrice(ticket.take_profit_2)}
+Tamaño sugerido: ${pos.shares || 1} unidades (~${store.formatPrice(pos.dollar_allocation || 0)})
+Riesgo monetario: ${store.formatPrice(pos.dollar_risk || 0)}
+Probabilidad Calibrada: ${Math.round(ticket.calibrated_probability * 100)}%`;
+
+  navigator.clipboard.writeText(copyText).then(() => {
+    store.showToast(`Orden para ${ticket.symbol} copiada al portapapeles`, "success");
+  }).catch(() => {
+    store.showToast("No se pudo acceder al portapapeles", "warning");
+  });
+}
